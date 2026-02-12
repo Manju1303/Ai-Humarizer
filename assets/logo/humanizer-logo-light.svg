@@ -1,0 +1,15 @@
+<svg width="320" height="40" viewBox="0 0 320 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="logoGradLight" x1="0" y1="0" x2="36" y2="36">
+      <stop offset="0%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#3B82F6"/>
+    </linearGradient>
+  </defs>
+  <!-- Icon -->
+  <rect x="0" y="2" width="36" height="36" rx="8" fill="url(#logoGradLight)"/>
+  <path d="M18 10C13.58 10 10 13.58 10 18C10 22.42 13.58 26 18 26C22.42 26 26 22.42 26 18C26 13.58 22.42 10 18 10ZM18 24C14.69 24 12 21.31 12 18C12 14.69 14.69 12 18 12C21.31 12 24 14.69 24 18C24 21.31 21.31 24 18 24Z" fill="white"/>
+  <path d="M18 20C19.1046 20 20 19.1046 20 18C20 16.8954 19.1046 16 18 16C16.8954 16 16 16.8954 16 18C16 19.1046 16.8954 20 18 20Z" fill="white"/>
+  <!-- Text -->
+  <text x="46" y="28" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-weight="700" fill="#1a1a2e" letter-spacing="-0.5">Sentient</text>
+  <text x="228" y="28" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="500" fill="#10B981" letter-spacing="0.5">by Manju1303</text>
+</svg>

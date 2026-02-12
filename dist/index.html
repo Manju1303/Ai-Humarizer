@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ai Humarizer</title>
+  <style>
+@font-face { font-family: 'Inter'; src: url('https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hjp-Ek-_EeA.woff2') format('woff2'); }
+@font-face { font-family: 'JetBrains Mono'; src: url('https://fonts.gstatic.com/s/jetbrainsmono/v18/tDbY2o-flEEny0FZhsfKu5WU4zr3E_BX0Pn54W4E.woff2') format('woff2'); }
+
+:root {
+  --font-sans: 'Inter', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  --color-bg: #0f172a; --color-fg: #f8fafc; --color-accent: #6366f1; --color-accent-2: #ec4899; --color-card: #1e293b; --color-border: rgba(148, 163, 184, 0.1);
+  --gradient: linear-gradient(135deg, #6366f1, #ec4899);
+}
+body { font-family: var(--font-sans); margin: 0; background: var(--color-bg); color: var(--color-fg); display: flex; flex-direction: column; min-height: 100vh; }
+.container { flex: 1; display: flex; align-items: center; justify-content: center; padding: 2rem; position: relative; z-index: 1; overflow: hidden; }
+.container::before { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 800px; height: 800px; background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%); z-index: -1; pointer-events: none; }
+
+.header { position: absolute; top: 0; width: 100%; padding: 1.5rem; text-align: center; display: flex; justify-content: center; align-items: center; gap: 1rem; }
+.logo-light { display: none; height: 32px; filter: drop-shadow(0 0 10px rgba(99, 102, 241, 0.5)); } 
+.logo-dark { display: none; height: 32px; filter: drop-shadow(0 0 10px rgba(99, 102, 241, 0.5)); }
+@media (prefers-color-scheme: light) { :root { --color-bg: #f8fafc; --color-fg: #0f172a; --color-card: #ffffff; --color-border: rgba(15, 23, 42, 0.1); } .logo-light { display: block; } } 
+@media (prefers-color-scheme: dark) { .logo-dark { display: block; } }
+
+.sentient-section { width: 100%; max-width: 900px; padding: 3rem; background: var(--color-card); border: 1px solid var(--color-border); border-radius: 24px; box-shadow: 0 20px 50px -10px rgba(0,0,0,0.3); text-align: center; position: relative; overflow: hidden; backdrop-filter: blur(10px); }
+.sentient-section::after { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: var(--gradient); }
+
+.sentient-title { font-size: 3rem; font-weight: 800; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0 0 1rem 0; letter-spacing: -1px; }
+.sentient-desc { margin-bottom: 2.5rem; opacity: 0.7; font-size: 1.1rem; }
+
+.controls-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; background: rgba(0,0,0,0.05); padding: 0.5rem; border-radius: 12px; }
+.mode-toggles { display: flex; gap: 0.5rem; }
+.mode-btn { padding: 8px 20px; border-radius: 8px; border: none; background: transparent; color: var(--color-fg); cursor: pointer; transition: 0.2s; font-weight: 600; opacity: 0.6; }
+.mode-btn.active { background: var(--color-bg); opacity: 1; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+.mode-select { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--color-border); background: var(--color-bg); color: var(--color-fg); font-family: var(--font-sans); cursor: pointer; outline: none; }
+
+.work-area { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; text-align: left; }
+.io-box { display: flex; flex-direction: column; height: 100%; }
+.io-label { margin-bottom: 0.75rem; font-weight: 600; font-size: 0.85rem; opacity: 0.5; text-transform: uppercase; letter-spacing: 1px; }
+.text-input { flex: 1; min-height: 400px; padding: 1.5rem; border-radius: 16px; border: 1px solid var(--color-border); background: var(--color-bg); color: var(--color-fg); font-family: var(--font-mono); resize: none; line-height: 1.6; font-size: 0.95rem; transition: border-color 0.2s; }
+.text-input:focus { border-color: var(--color-accent); outline: none; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
+
+.actions { display: flex; justify-content: center; gap: 1rem; margin-top: 2.5rem; }
+.action-btn { padding: 14px 40px; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; transition: 0.2s; font-size: 1rem; letter-spacing: -0.01em; }
+.btn-primary { background: var(--gradient); color: white; box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.4); } 
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 15px 30px -5px rgba(99, 102, 241, 0.5); }
+.btn-secondary { background: transparent; color: var(--color-fg); border: 1px solid var(--color-border); }
+.btn-secondary:hover { background: rgba(255,255,255,0.05); }
+
+@media (max-width: 768px) { .work-area { grid-template-columns: 1fr; } .container { padding: 1rem; } .sentient-section { padding: 1.5rem; } .controls-row { flex-direction: column; gap: 1rem; } }
+</style>
+</head>
+<body>
+  <header class="header">
+    <img src="/assets/logo/humanizer-logo-light.svg" class="logo-light" alt="Ai Humarizer">
+    <img src="/assets/logo/humanizer-logo-dark.svg" class="logo-dark" alt="Ai Humarizer">
+  </header>
+  <main class="container">
+    <section class="sentient-section">
+      <h2 class="sentient-title">Ai Humarizer</h2>
+      <p class="sentient-desc">Breathing life into artificial intelligence.</p>
+      
+      <div class="controls-row">
+        <div class="mode-toggles">
+          <button class="mode-btn active" id="btn-mode-text">Text Mode</button>
+          <button class="mode-btn" id="btn-mode-code">Code Mode</button>
+        </div>
+        <div id="options-container">
+          <!-- Options injected via JS -->
+        </div>
+      </div>
+
+      <div class="work-area">
+        <div class="io-box">
+          <label class="io-label">Artificial Input</label>
+          <textarea class="text-input" id="sentient-input" placeholder="Paste AI text here..."></textarea>
+        </div>
+        <div class="io-box">
+          <label class="io-label">Sentient Output</label>
+          <textarea class="text-input" id="sentient-output" readonly placeholder="Enhanced result will appear here..."></textarea>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="action-btn btn-primary" id="btn-convert">✨ Humanize</button>
+        <button class="action-btn btn-secondary" id="btn-copy">Copy Result</button>
+      </div>
+    </section>
+  </main>
+  
+<script>
+  const sentient = {
+    text: (text, tone) => {
+      // Common cleanups
+      text = text.replace(/(In conclusion,|Furthermore,|Moreover,|It is important to note that|As an AI language model,|Certainly,|However,)\s*/gi, "");
+      
+      const swaps = {
+        "utilize": "use", "implement": "set up", "facilitate": "help", "demonstrate": "show",
+        "subsequently": "then", "optimum": "best", "verify": "check", "ensure": "make sure",
+        "commence": "start", "terminate": "end", "endeavor": "try", "assist": "help",
+        "paradigm": "model", "leverage": "use", "synergy": "teamwork", "disseminate": "share"
+      };
+
+      if (tone === 'casual') {
+        Object.keys(swaps).forEach(k => text = text.replace(new RegExp("\\b"+k+"\\b", "gi"), swaps[k]));
+        text = text.replace(/\b(cannot|do not|will not|is not|are not)\b/gi, (m) => ({"cannot":"can't","do not":"don't","will not":"won't","is not":"isn't","are not":"aren't"}[m.toLowerCase()] || m));
+        
+        const starters = ["Basically, ", "So, ", "Honestly, ", "Look, ", "Here's the deal: "];
+        if (Math.random() > 0.3) text = starters[Math.floor(Math.random()*starters.length)] + text.charAt(0).toLowerCase() + text.slice(1);
+        
+        if (Math.random() > 0.5) text = text.replace(/\. /g, ". ... ");
+      } else if (tone === 'professional') {
+        Object.keys(swaps).forEach(k => text = text.replace(new RegExp("\\b"+k+"\\b", "gi"), swaps[k]));
+        // Keep clear structure
+      } else if (tone === 'story') {
+        text = "Picture this: " + text.charAt(0).toLowerCase() + text.slice(1);
+        text = text.replace(/\. /g, "—and ");
+      }
+      return text.trim();
+    },
+    code: (code, style) => {
+      if (style === 'debug') {
+        const logs = ['console.log("DEBUG: check point 1")', 'console.dir(data)', 'console.error(err)', 'debugger;'];
+        return code.replace(/{/g, m => Math.random() > 0.6 ? `{\n  ${logs[Math.floor(Math.random()*logs.length)]};` : m);
+      } else if (style === 'commented') {
+        const comments = ["// Logic needs review", "// Optimization needed here", "// Handling edge case", "// Temporary fix for race condition"];
+        return code.split('\n').map(line => Math.random() > 0.7 && line.trim().length > 5 ? `${line} ${comments[Math.floor(Math.random()*comments.length)]}` : line).join('\n');
+      } else {
+        // Standard Chaos
+        code = code.replace(/const /g, () => Math.random() > 0.8 ? "let " : "const ");
+        if (Math.random() > 0.5) code = "// TODO: Refactor\n" + code;
+        return code;
+      }
+    }
+  };
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const input = document.getElementById('sentient-input'), output = document.getElementById('sentient-output');
+    const btnText = document.getElementById('btn-mode-text'), btnCode = document.getElementById('btn-mode-code');
+    const optionsContainer = document.getElementById('options-container');
+    let mode = 'text';
+
+    const renderOptions = (m) => {
+      if (m === 'text') {
+        optionsContainer.innerHTML = `<select id="tone-select" class="mode-select"><option value="casual">Casual Tone</option><option value="professional">Professional Tone</option><option value="story">Storytelling</option></select>`;
+      } else {
+        optionsContainer.innerHTML = `<select id="style-select" class="mode-select"><option value="standard">Standard Refactor</option><option value="debug">Debug Mode (Logs)</option><option value="commented">Heavily Commented</option></select>`;
+      }
+    };
+
+    const setMode = (m) => { 
+      mode = m; 
+      renderOptions(m);
+      if(m==='text'){ 
+        btnText.classList.add('active'); btnCode.classList.remove('active'); 
+        input.placeholder='Paste AI Text...'; 
+      } else { 
+        btnCode.classList.add('active'); btnText.classList.remove('active'); 
+        input.placeholder='Paste AI Code...'; 
+      } 
+    };
+
+    btnText.onclick = () => setMode('text'); 
+    btnCode.onclick = () => setMode('code');
+    setMode('text'); // Init
+
+    document.getElementById('btn-convert').onclick = () => { 
+      if(!input.value) return; 
+      output.value = "Thinking..."; 
+      const option = mode === 'text' ? document.getElementById('tone-select').value : document.getElementById('style-select').value;
+      setTimeout(() => output.value = sentient[mode](input.value, option), 600); 
+    };
+    
+    document.getElementById('btn-copy').onclick = function() { 
+      navigator.clipboard.writeText(output.value); 
+      const originalText = this.innerText;
+      this.innerText="Copied!"; 
+      setTimeout(()=>this.innerText=originalText, 2000); 
+    };
+  });
+</script>
+
+</body></html>
