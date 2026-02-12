@@ -181,11 +181,14 @@ const getScripts = () => `
     const optionsContainer = document.getElementById('options-container');
     const statusDot = document.getElementById('status-dot');
     const statusText = document.getElementById('status-text');
-    const intensitySlider = document.getElementById('intensity-slider');
-    const intensityVal = document.getElementById('intensity-val');
     let mode = 'text';
+    let intensity = 0.5;
 
-    intensitySlider.oninput = () => { intensityVal.textContent = Math.round(intensitySlider.value*100)+'%'; };
+    document.querySelectorAll('.intensity-tab').forEach(btn => btn.onclick = () => {
+      document.querySelectorAll('.intensity-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      intensity = parseFloat(btn.dataset.val);
+    });
 
     input.oninput = () => updateStats(input.value, output.value);
 
@@ -207,10 +210,10 @@ const getScripts = () => `
       statusDot.className = 'status-dot processing'; statusText.textContent = 'Processing';
       scanLine.classList.add('active'); output.value = "";
       const option = mode === 'text' ? document.getElementById('tone-select').value : document.getElementById('style-select').value;
-      const intensity = parseFloat(intensitySlider.value);
+      const lvl = intensity;
       setTimeout(() => {
-        const result = sentient[mode](input.value, option, intensity);
-        history.save({mode,option,intensity,input:input.value,output:result,time:Date.now()});
+        const result = sentient[mode](input.value, option, lvl);
+        history.save({mode,option,intensity:lvl,input:input.value,output:result,time:Date.now()});
         renderHistory();
         let i = 0;
         const tw = () => { if (i < result.length) { output.value += result.charAt(i); i++; updateStats(input.value,output.value); setTimeout(tw, Math.random()*6+1); } else { btn.classList.remove('processing'); btn.innerHTML = '<i data-lucide="zap" class="icon-sm"></i> Humanize'; lucide.createIcons(); statusDot.className='status-dot online'; statusText.textContent='Complete'; scanLine.classList.remove('active'); updateStats(input.value,output.value); setTimeout(()=>{statusText.textContent='Ready';},2000); } };
@@ -317,13 +320,15 @@ body { font-family: var(--font-sans); background: var(--bg-primary); color: var(
 .footer .shortcuts { margin-left: 12px; font-size: 0.65rem; color: var(--text-muted); opacity: 0.7; }
 .footer kbd { background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1); font-family: var(--font-mono); font-size: 0.6rem; }
 
-/* Intensity Slider */
+/* Intensity Modes */
 .intensity-group { display: flex; align-items: center; gap: 10px; }
 .intensity-label { font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; white-space: nowrap; }
-.intensity-slider { -webkit-appearance: none; appearance: none; width: 100px; height: 6px; border-radius: 3px; background: rgba(255,255,255,0.08); outline: none; cursor: pointer; }
-.intensity-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent-cyan)); cursor: pointer; box-shadow: 0 2px 8px rgba(99,102,241,0.4); transition: transform 0.2s; }
-.intensity-slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
-.intensity-val { font-size: 0.8rem; font-weight: 700; color: var(--accent); min-width: 36px; text-align: center; font-family: var(--font-mono); }
+.intensity-tabs { display: flex; background: rgba(0,0,0,0.3); border-radius: 10px; padding: 3px; border: 1px solid rgba(255,255,255,0.04); }
+.intensity-tab { padding: 7px 16px; border-radius: 8px; border: none; background: transparent; color: var(--text-secondary); cursor: pointer; font-weight: 600; font-size: 0.78rem; font-family: var(--font-sans); transition: all 0.25s ease; }
+.intensity-tab:hover { color: var(--text-primary); }
+.intensity-tab.active { background: linear-gradient(135deg, var(--accent-emerald), #059669); color: white; box-shadow: 0 3px 12px rgba(16, 185, 129, 0.35); }
+.intensity-tab.active[data-val="1"] { background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 3px 12px rgba(239, 68, 68, 0.35); }
+.intensity-tab.active[data-val="0.5"] { background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 3px 12px rgba(245, 158, 11, 0.35); }
 
 /* Stats Bar */
 .stats-bar { padding: 0.6rem 2.5rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-muted); font-family: var(--font-mono); background: rgba(0,0,0,0.08); }
@@ -364,7 +369,7 @@ body { font-family: var(--font-sans); background: var(--bg-primary); color: var(
   .controls { flex-direction: column; } .top-bar { flex-direction: column; gap: 1rem; }
   .card-header { flex-direction: column; align-items: flex-start; } .card-title { font-size: 1.5rem; }
   .text-input { min-height: 220px; } .actions-bar { flex-wrap: wrap; }
-  .intensity-group { width: 100%; justify-content: center; }
+  .intensity-group { width: 100%; justify-content: center; flex-wrap: wrap; }
   .stats-bar { flex-direction: column; gap: 4px; text-align: center; }
   .history-panel { width: 100%; right: -100%; }
   .footer .shortcuts { display: none; }
@@ -412,8 +417,11 @@ const getTemplate = () => `<!DOCTYPE html>
         <div id="options-container"></div>
         <div class="intensity-group">
           <span class="intensity-label">Intensity</span>
-          <input type="range" min="0.1" max="1" step="0.05" value="0.5" class="intensity-slider" id="intensity-slider">
-          <span class="intensity-val" id="intensity-val">50%</span>
+          <div class="intensity-tabs">
+            <button class="intensity-tab" data-val="0.25"><i data-lucide="feather" class="icon-sm"></i> Light</button>
+            <button class="intensity-tab active" data-val="0.5"><i data-lucide="zap" class="icon-sm"></i> Medium</button>
+            <button class="intensity-tab" data-val="1"><i data-lucide="flame" class="icon-sm"></i> Heavy</button>
+          </div>
         </div>
       </div>
 
