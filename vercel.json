@@ -7,10 +7,10 @@
     },
     {
       "source": "/(.*)",
-      "destination": "/dist/$1"
+      "destination": "/public/$1"
     }
   ],
   "env": {
-    "GROQ_API_KEY": ""
+    "GROQ_API_KEY": "@groq_api_key"
   }
 }

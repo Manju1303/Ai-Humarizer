@@ -635,11 +635,11 @@ async function build() {
   console.log("Building Ai Humarizer...");
   try {
     const page = getTemplate();
-    try { await Bun.write("dist/.gitkeep", ""); } catch { }
-    await Bun.write("dist/index.html", page);
+    try { await Bun.write("public/.gitkeep", ""); } catch { }
+    await Bun.write("public/index.html", page);
 
     const assetsDir = "assets";
-    const distAssetsDir = "dist/assets";
+    const distAssetsDir = "public/assets";
     try {
       await Bun.write(distAssetsDir + "/logo/.gitkeep", "");
       for (const logo of ["humanizer-logo-light.svg", "humanizer-logo-dark.svg"]) {
@@ -687,7 +687,7 @@ async function startDevServer() {
         }
 
         if (path === "/") path = "/index.html";
-        const filePath = join("dist", path);
+        const filePath = join("public", path);
         try { return new Response(Bun.file(filePath)); } catch { return new Response("Not Found", { status: 404 }); }
       },
     });
@@ -731,7 +731,7 @@ async function startDevServer() {
       });
       console.log("Dev server running at http://localhost:" + server.port);
       watch(".", { recursive: true }, async (event, filename) => {
-        if (filename && !filename.startsWith("dist") && !filename.startsWith("node_modules") && !filename.startsWith(".git")) {
+        if (filename && !filename.startsWith("public") && !filename.startsWith("node_modules") && !filename.startsWith(".git")) {
           console.log("Change: " + filename);
           await build();
         }
