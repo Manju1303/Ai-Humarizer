@@ -1,31 +1,41 @@
-# Sentient
+# AI Humanizer v3.0 (Free Forever)
 
-**Version:** 1.0.0  
-**Author:** Manju1303  
-**Status:** Live  
-**Date:** February 2026
+Transform AI-generated text and code into natural, human-like content using the power of Llama 3 via Groq Cloud.
 
-## Abstract
-**Sentient** is an advanced AI humanization engine designed to bridge the gap between artificial intelligence and human communication. It transforms robotic, sterile outputs into natural, flowing text and developer-friendly code.
+## 🚀 Features
 
-## 🚀 Sentient Engine
-The core of this project is the **Sentient Engine**. It provides:
+- **"Free Forever" Engine**: Uses Groq's LPU (Llama 3.3 70B & 8B) for lightning-fast, high-accuracy humanization.
+- **Multi-Pass Refinement**: Automatically detects "AI probability" and performs recursive rewriting until the text passes detection.
+- **Document Support**: One-click extraction for **PDF, DOCX, and TXT** files.
+- **Chunking Logic**: Process documents of any length without serverless timeout issues.
+- **Strong Mode**: Toggle high-accuracy mode for academic or complex storytelling needs.
 
-### 📝 Text Humanization
-*   **Casual Tone**: Injects personality, slang, and conversational flow.
-*   **Professional Tone**: Ensures polish and clarity without the "AI accent".
-*   **Storytelling**: Weaves narratives for engaging content.
+## 🛠️ Local Setup
 
-### 💻 Code Humanization
-*   **Standard**: Refactors code to look hand-written (varies styles, adds minor imperfections).
-*   **Debug Mode**: Automatically adds console logs for troubleshooting.
-*   **Commented**: Adds helpful, human-readable comments explaining the logic.
+1. **Install Dependencies**:
+   ```bash
+   bun install
+   ```
 
-## Motivation
-As AI becomes ubiquitous, the need for "human" touch in digital interactions grows. **Sentient** restores the warmth and nuance often lost in machine generation.
+2. **Configure Environment**:
+   Create a `.env` file:
+   ```env
+   GROQ_API_KEY=your_groq_api_key_here
+   ```
 
-## License
-This project is released under **CC BY 4.0**.
+3. **Run Development Server**:
+   ```bash
+   bun run dev
+   ```
 
-## Author
-Created and maintained by **Manju1303**.
+## ☁️ Deployment (One-Click)
+
+This project is configured for **Vercel** out-of-the-box.
+
+1. Connect this repo to Vercel.
+2. Add your `GROQ_API_KEY` to the environment variables.
+3. Deploy!
+
+## 📜 License
+
+MIT

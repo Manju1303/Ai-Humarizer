@@ -18,6 +18,9 @@ body { font-family: var(--font-sans); background: var(--bg-primary); color: var(
 #particles { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
 .icon-sm { width: 16px; height: 16px; display: inline-block; vertical-align: middle; }
 
+.strong-mode-toggle { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--accent-cyan); font-weight: 600; margin-left: 10px; }
+.strong-checkbox { width: 16px; height: 16px; cursor: pointer; accent-color: var(--accent-cyan); }
+
 /* App Layout */
 .app { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 2rem 2rem 1rem; }
 
@@ -193,6 +196,8 @@ body { font-family: var(--font-sans); background: var(--bg-primary); color: var(
   .text-input { min-height: 150px; font-size: 0.8rem; }
 }
 </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';</script>
 </head>
 <body>
   <canvas id="particles"></canvas>
@@ -275,6 +280,8 @@ body { font-family: var(--font-sans); background: var(--bg-primary); color: var(
   </div>
   
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script src="https://unpkg.com/mammoth@1.4.21/mammoth.browser.min.js"></script>
 <script>
   try {
     var sentient = {
@@ -432,8 +439,8 @@ body { font-family: var(--font-sans); background: var(--bg-primary); color: var(
     }
 
     const updateStats = (inp,out) => {
-      const wc = s => s.trim() ? s.trim().split(/\s+/).length : 0;
-      const cc = s => s.length;
+      const wc = s => (s && s.trim()) ? s.trim().split(/\s+/).length : 0;
+      const cc = s => (s || "").length;
       document.getElementById('stats-in').textContent = wc(inp)+' words / '+cc(inp)+' chars';
       document.getElementById('stats-out').textContent = out ? wc(out)+' words / '+cc(out)+' chars' : '—';
     };
@@ -442,7 +449,7 @@ body { font-family: var(--font-sans); background: var(--bg-primary); color: var(
       const panel = document.getElementById('history-list');
       if (!panel) return;
       if (history.items.length === 0) { panel.innerHTML = '<div class="history-empty">No conversions yet</div>'; return; }
-      panel.innerHTML = history.items.map((h,i) => '<div class="history-item" data-idx="'+i+'"><div class="history-meta"><span class="history-mode">'+h.mode+'</span><span class="history-option">'+h.option+'</span><span class="history-time">'+new Date(h.time).toLocaleTimeString()+'</span></div><div class="history-preview">'+h.input.slice(0,80)+(h.input.length>80?'...':'')+'</div></div>').join('');
+      panel.innerHTML = history.items.map((h,i) => '<div class="history-item" data-idx="'+i+'"><div class="history-meta"><span class="history-mode">'+h.mode+'</span><span class="history-option">'+h.option+'</span><span class="history-time">'+new Date(h.time).toLocaleTimeString()+'</span></div><div class="history-preview">'+(h.input || "").slice(0,80)+((h.input || "").length>80?'...':'')+'</div></div>').join('');
       panel.querySelectorAll('.history-item').forEach(el => el.onclick = () => {
         const h = history.items[parseInt(el.dataset.idx)];
         document.getElementById('engine-input').value = h.input;
@@ -472,7 +479,18 @@ body { font-family: var(--font-sans); background: var(--bg-primary); color: var(
 
       const renderOptions = (m) => {
         if (m === 'text') {
-          optionsContainer.innerHTML = '<select id="tone-select" class="option-select"><option value="casual">Casual</option><option value="professional">Professional</option><option value="story">Storytelling</option><option value="academic">Academic</option></select>';
+          optionsContainer.innerHTML = `
+            <select id="tone-select" class="option-select">
+              <option value="casual">Casual</option>
+              <option value="professional">Professional</option>
+              <option value="story"Selected>Storytelling</option>
+              <option value="academic">Academic</option>
+            </select>
+            <div class="strong-mode-toggle">
+              <input type="checkbox" id="strong-mode" class="strong-checkbox">
+              <label for="strong-mode">Strong (Free Cloud)</label>
+            </div>
+          `;
         } else {
           optionsContainer.innerHTML = '<select id="style-select" class="option-select"><option value="standard">Standard</option><option value="debug">Debug</option><option value="commented">Commented</option><option value="minified">Minified</option></select>';
         }
@@ -480,25 +498,103 @@ body { font-family: var(--font-sans); background: var(--bg-primary); color: var(
       const setMode = (m) => { mode = m; renderOptions(m); btnText.classList.toggle('active', m==='text'); btnCode.classList.toggle('active', m==='code'); input.placeholder = m==='text' ? 'Paste AI-generated text here...' : 'Paste AI-generated code here...'; };
       btnText.onclick = () => setMode('text'); btnCode.onclick = () => setMode('code'); setMode('text');
 
-      const doConvert = () => {
+      const doConvert = async () => {
         if(!input.value) return;
         const btn = document.getElementById('btn-convert');
         const scanLine = document.getElementById('scan-line');
+        const isStrong = document.getElementById('strong-mode')?.checked;
+        
         btn.classList.add('processing'); btn.innerHTML = '<span class="btn-loader"></span> Processing...';
         statusDot.className = 'status-dot processing'; statusText.textContent = 'Processing';
         scanLine.classList.add('active'); output.value = "";
+        
         const option = mode === 'text' ? document.getElementById('tone-select').value : document.getElementById('style-select').value;
         const lvl = intensity;
-        setTimeout(() => {
-          const result = sentient[mode](input.value, option, lvl);
-          history.save({mode,option,intensity:lvl,input:input.value,output:result,time:Date.now()});
-          renderHistory();
-          let i = 0;
-          const tw = () => { if (i < result.length) { output.value += result.charAt(i); i++; updateStats(input.value,output.value); setTimeout(tw, Math.random()*6+1); } else { btn.classList.remove('processing'); btn.innerHTML = '<i data-lucide="zap" class="icon-sm"></i> Humanize'; lucide.createIcons(); statusDot.className='status-dot online'; statusText.textContent='Complete'; scanLine.classList.remove('active'); updateStats(input.value,output.value); setTimeout(()=>{statusText.textContent='Ready';},2000); } };
-          tw();
-        }, 800);
+
+        if (mode === 'text' && isStrong) {
+          try {
+            const response = await fetch('/api/humanize', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ text: input.value, tone: option })
+            });
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
+            
+            const result = data.text;
+            history.save({mode: 'strong', option, intensity: lvl, input: input.value, output: result, time: Date.now()});
+            renderHistory();
+            output.value = result;
+          } catch (err) {
+            console.error(err);
+            alert("Error: " + err.message + ". Make sure you set GROQ_API_KEY in .env");
+          } finally {
+            btn.classList.remove('processing'); btn.innerHTML = '<i data-lucide="zap" class="icon-sm"></i> Humanize'; lucide.createIcons(); statusDot.className='status-dot online'; statusText.textContent='Ready'; scanLine.classList.remove('active'); updateStats(input.value,output.value);
+          }
+        } else {
+          setTimeout(() => {
+            const result = sentient[mode](input.value, option, lvl);
+            history.save({mode,option,intensity:lvl,input:input.value,output:result,time:Date.now()});
+            renderHistory();
+            let i = 0;
+            const tw = () => { if (i < result.length) { output.value += result.charAt(i); i++; updateStats(input.value,output.value); setTimeout(tw, Math.random()*6+1); } else { btn.classList.remove('processing'); btn.innerHTML = '<i data-lucide="zap" class="icon-sm"></i> Humanize'; lucide.createIcons(); statusDot.className='status-dot online'; statusText.textContent='Complete'; scanLine.classList.remove('active'); updateStats(input.value,output.value); setTimeout(()=>{statusText.textContent='Ready';},2000); } };
+            tw();
+          }, 800);
+        }
       };
       document.getElementById('btn-convert').onclick = doConvert;
+
+      // File handling
+      const fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.accept = '.txt,.pdf,.docx';
+      fileInput.style.display = 'none';
+      document.body.appendChild(fileInput);
+
+      fileInput.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        statusText.textContent = "Extracting...";
+        try {
+          if (file.type === "text/plain") {
+            input.value = await file.text();
+          } else if (file.type === "application/pdf") {
+            const reader = new FileReader();
+            reader.onload = async () => {
+              const pdf = await pdfjsLib.getDocument({data: reader.result}).promise;
+              let fullText = "";
+              for(let i=1; i<=pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const content = await page.getTextContent();
+                fullText += content.items.map(it => it.str).join(' ') + "\n";
+              }
+              input.value = fullText;
+              updateStats(input.value, "");
+            };
+            reader.readAsArrayBuffer(file);
+          } else if (file.name.endsWith(".docx")) {
+            const reader = new FileReader();
+            reader.onload = async () => {
+              const result = await mammoth.extractRawText({arrayBuffer: reader.result});
+              input.value = result.value;
+              updateStats(input.value, "");
+            };
+            reader.readAsArrayBuffer(file);
+          }
+        } catch (err) {
+          alert("Extraction failed: " + err.message);
+        } finally {
+          statusText.textContent = "Ready";
+        }
+      };
+
+      const uploadBtn = document.createElement('button');
+      uploadBtn.className = "action-btn btn-secondary";
+      uploadBtn.id = "btn-upload";
+      uploadBtn.innerHTML = '<i data-lucide="upload" class="icon-sm"></i> Upload';
+      document.querySelector('.actions-bar').prepend(uploadBtn);
+      uploadBtn.onclick = () => fileInput.click();
+      lucide.createIcons();
 
       document.addEventListener('keydown', e => {
         if (e.ctrlKey && e.key === 'Enter') { e.preventDefault(); doConvert(); }
